@@ -1,3 +1,0 @@
-Desarrollamos lo siguiente:
-- Comprobamos que la lógica y funcionalidad cumpla con lo pedido en el TP2.
-- Desarollamos el código para mostrar los datos en una ventana.
