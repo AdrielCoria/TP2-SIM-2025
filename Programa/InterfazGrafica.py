@@ -12,12 +12,19 @@ class AplicacionGeneradora:
     def __init__(self):
         self.ventana = tk.Tk()
         self.ventana.title("Generador de Números Aleatorios")
+        self.ventana.geometry("900x600")
         
-        # Configurar tema oscuro
-        #self._configurar_tema_oscuro()
-        #self.ventana.attributes('-disabled', True) # Pantalla Completa
-        
-        self.ventana.geometry("1200x800")
+        # Paleta de colores moderna
+        self.colores = {
+            'fondo': '#f8f9fa',
+            'panel': '#ffffff',
+            'accent': '#6c757d',
+            'texto': '#495057',
+            'boton': '#6c757d',
+            'boton_hover': '#5a6268',
+            'exito': '#28a745',
+            'error': '#dc3545'
+        }
         
         # Variables de control
         self.distribucion_seleccionada = tk.StringVar()
@@ -33,6 +40,8 @@ class AplicacionGeneradora:
         
         # Datos generados
         self.datos_generados = []
+        self.prueba_chi = None
+        self.prueba_ks = None
         
         # Configurar la interfaz
         self._configurar_interfaz()
@@ -40,203 +49,103 @@ class AplicacionGeneradora:
     def ejecutar(self):
         self.ventana.mainloop()
         
-    def _configurar_tema_oscuro(self):
-        """Configura un tema oscuro personalizado sin necesidad de archivos externos"""
-        # Colores principales
-        bg_color = '#1e1e1e'  # Fondo oscuro
-        fg_color = '#ffffff'  # Texto blanco
-        accent_color = '#3a3a3a'  # Color de acento
-        entry_bg = '#2d2d2d'  # Fondo de campos de entrada
-        
-        # Configurar el color de fondo de la ventana principal
-        self.ventana.configure(bg=bg_color)
-        
-        # Configurar estilo para ttk widgets
+    def _configurar_interfaz(self):
+        # Configurar estilo
         style = ttk.Style()
-        
-        # Usar el tema 'clam' como base porque es más personalizable
         style.theme_use('clam')
         
-        # Configurar colores para los diferentes widgets
+        # Configurar colores
         style.configure('.', 
-                      background=bg_color,
-                      foreground=fg_color,
-                      fieldbackground=entry_bg)
+                       background=self.colores['fondo'],
+                       foreground=self.colores['texto'],
+                       font=('Segoe UI', 10))
         
-        style.configure('TLabel', 
-                      background=bg_color,
-                      foreground=fg_color,
-                      padding=5)
-        
-        style.configure('TFrame', 
-                      background=bg_color)
-        
+        style.configure('TFrame', background=self.colores['fondo'])
+        style.configure('TLabel', background=self.colores['fondo'], foreground=self.colores['texto'])
         style.configure('TButton', 
-                      background=accent_color,
-                      foreground=fg_color,
-                      padding=5,
-                      relief='flat')
-        
+                       background=self.colores['boton'],
+                       foreground='white',
+                       padding=8,
+                       borderwidth=0)
         style.map('TButton',
-                background=[('active', '#4a4a4a'), ('pressed', '#5a5a5a')])
+                 background=[('active', self.colores['boton_hover'])])
         
         style.configure('TEntry', 
-                      fieldbackground=entry_bg,
-                      foreground=fg_color,
-                      insertcolor=fg_color,
-                      bordercolor=accent_color,
-                      lightcolor=accent_color,
-                      darkcolor=accent_color)
+                      fieldbackground='white',
+                      bordercolor='#ced4da',
+                      lightcolor='#ced4da',
+                      darkcolor='#ced4da')
         
-        style.configure('TCombobox', 
-                      fieldbackground=entry_bg,
-                      foreground=fg_color,
-                      background=accent_color)
+        style.configure('TCombobox', fieldbackground='white')
+        style.configure('Treeview', 
+                      background='white',
+                      fieldbackground='white',
+                      foreground=self.colores['texto'])
         
-        style.configure('Treeview',
-                      background=entry_bg,
-                      foreground=fg_color,
-                      fieldbackground=entry_bg)
+        # Configurar ventana principal
+        self.ventana.configure(bg=self.colores['fondo'])
         
-        style.map('Treeview',
-                background=[('selected', '#4a4a4a')])
-        
-        style.configure('Treeview.Heading',
-                      background=accent_color,
-                      foreground=fg_color,
-                      relief='flat')
-        
-        # Configurar matplotlib para tema oscuro
-        plt.style.use('dark_background')
-        
-        # Configurar el área de texto desplazable
-        style.configure('Vertical.TScrollbar',
-                      background=accent_color,
-                      troughcolor=bg_color,
-                      bordercolor=bg_color,
-                      arrowcolor=fg_color)
-        
-        style.configure('Horizontal.TScrollbar',
-                      background=accent_color,
-                      troughcolor=bg_color,
-                      bordercolor=bg_color,
-                      arrowcolor=fg_color)
-        
-        # Configurar el notebook (si usas pestañas)
-        style.configure('TNotebook',
-                      background=bg_color,
-                      bordercolor=bg_color)
-        
-        style.configure('TNotebook.Tab',
-                      background=accent_color,
-                      foreground=fg_color,
-                      padding=[10, 5])
-        
-        style.map('TNotebook.Tab',
-                background=[('selected', bg_color), ('active', '#4a4a4a')],
-                foreground=[('selected', fg_color), ('active', fg_color)])
-
-    def _configurar_interfaz(self):
-        # Frame principal
-        main_frame = ttk.Frame(self.ventana, padding="10")
+        # Contenedor principal
+        main_frame = ttk.Frame(self.ventana, padding=(20, 15))
         main_frame.pack(fill=tk.BOTH, expand=True)
         
-        # Frame de entrada de datos
-        frame_datos = ttk.LabelFrame(main_frame, text="Datos", padding="10")
-        frame_datos.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        # Panel superior - Controles
+        control_frame = ttk.Frame(main_frame)
+        control_frame.pack(fill=tk.X, pady=(0, 15))
         
-        # Tamaño de muestra
-        ttk.Label(frame_datos, text="Tamaño de muestra (hasta 1,000,000):").grid(row=0, column=0, sticky="w")
-        ttk.Entry(frame_datos, textvariable=self.tamano_muestra).grid(row=0, column=1, sticky="ew")
+        # Sección izquierda - Configuración básica
+        config_frame = ttk.LabelFrame(control_frame, text=" Configuración ", padding=15)
+        config_frame.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 15))
         
-        # Distribución
-        ttk.Label(frame_datos, text="Distribución:").grid(row=1, column=0, sticky="w")
-        distribuciones = ["Uniforme [a,b]", "Exponencial", "Normal"]
-        cb_distribucion = ttk.Combobox(frame_datos, textvariable=self.distribucion_seleccionada, 
-                                      values=distribuciones, state="readonly")
-        cb_distribucion.grid(row=1, column=1, sticky="ew")
-        cb_distribucion.bind("<<ComboboxSelected>>", self._mostrar_parametros_distribucion)
+        ttk.Label(config_frame, text="Tamaño de muestra:").grid(row=0, column=0, sticky='w', pady=3)
+        ttk.Entry(config_frame, textvariable=self.tamano_muestra, width=15).grid(row=0, column=1, pady=3)
         
-        # Intervalos
-        ttk.Label(frame_datos, text="Intervalos para histograma:").grid(row=2, column=0, sticky="w")
-        intervalos = ["10", "15", "20", "25"]
-        cb_intervalos = ttk.Combobox(frame_datos, textvariable=self.intervalos_seleccionados, 
-                                     values=intervalos, state="readonly")
-        cb_intervalos.grid(row=2, column=1, sticky="ew")
+        ttk.Label(config_frame, text="Distribución:").grid(row=1, column=0, sticky='w', pady=3)
+        cb_dist = ttk.Combobox(config_frame, textvariable=self.distribucion_seleccionada, 
+                             values=["Uniforme [a,b]", "Exponencial", "Normal"], 
+                             state="readonly", width=13)
+        cb_dist.grid(row=1, column=1, pady=3)
+        cb_dist.bind("<<ComboboxSelected>>", self._mostrar_parametros_distribucion)
         
-        # Botón generar
-        ttk.Button(frame_datos, text="Generar", command=self._generar_distribucion).grid(row=3, column=0, columnspan=2, pady=10)
+        ttk.Label(config_frame, text="Intervalos:").grid(row=2, column=0, sticky='w', pady=3)
+        ttk.Combobox(config_frame, textvariable=self.intervalos_seleccionados, 
+                    values=["10", "15", "20", "25"], state="readonly", width=13).grid(row=2, column=1, pady=3)
         
-        # Frame de parámetros (se actualiza según la distribución seleccionada)
-        self.frame_parametros = ttk.LabelFrame(main_frame, text="Parámetros Requeridos", padding="10")
-        self.frame_parametros.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
+        # Sección derecha - Parámetros
+        self.frame_parametros = ttk.LabelFrame(control_frame, text=" Parámetros ", padding=15)
+        self.frame_parametros.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         
-        # Frame de resultados (gráfico y tabla)
-        frame_resultados = ttk.Frame(main_frame)
-        frame_resultados.grid(row=1, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
+        # Botón de generación
+        btn_frame = ttk.Frame(control_frame)
+        btn_frame.pack(side=tk.LEFT, fill=tk.Y, padx=15)
+        ttk.Button(btn_frame, text="Generar Datos", command=self._generar_distribucion).pack(pady=10)
         
-        # Gráfico
-        self.fig, self.ax = plt.subplots(figsize=(8, 4))
-        self.canvas = FigureCanvasTkAgg(self.fig, master=frame_resultados)
-        self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        # Panel central - Datos generados
+        data_frame = ttk.LabelFrame(main_frame, text=" Datos Generados ", padding=10)
+        data_frame.pack(fill=tk.BOTH, expand=True)
         
-        # Tabla de datos generados
-        self.tabla_datos = ttk.Treeview(frame_resultados, columns=("valor",), show="headings", height=10)
-        self.tabla_datos.heading("valor", text="Variables Generadas")
-        self.tabla_datos.column("valor", width=150)
+        self.tabla_datos = ttk.Treeview(data_frame, columns=("valor",), show="headings", height=10)
+        self.tabla_datos.heading("valor", text="Valor")
+        self.tabla_datos.column("valor", width=120)
+        scrollbar = ttk.Scrollbar(data_frame, orient="vertical", command=self.tabla_datos.yview)
+        self.tabla_datos.configure(yscrollcommand=scrollbar.set)
+        
         self.tabla_datos.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
-        # Frame de pruebas estadísticas
-        frame_pruebas = ttk.Frame(main_frame)
-        frame_pruebas.grid(row=2, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
+        # Panel inferior - Botones de visualización
+        btn_vis_frame = ttk.Frame(main_frame)
+        btn_vis_frame.pack(fill=tk.X, pady=(15, 0))
         
-        # Prueba Chi-cuadrado
-        frame_chi = ttk.LabelFrame(frame_pruebas, text="Prueba Chi-Cuadrado", padding="5")
-        frame_chi.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5)
-        
-        self.tabla_chi = ttk.Treeview(frame_chi, columns=("desde", "hasta", "frec_obs", "frec_esp", "chi", "chi_acum"), 
-                                     show="headings", height=8)
-        self.tabla_chi.heading("desde", text="Desde")
-        self.tabla_chi.heading("hasta", text="Hasta")
-        self.tabla_chi.heading("frec_obs", text="Frec. Obs.")
-        self.tabla_chi.heading("frec_esp", text="Frec. Esp.")
-        self.tabla_chi.heading("chi", text="Chi")
-        self.tabla_chi.heading("chi_acum", text="Chi Acum.")
-        
-        for col in ("desde", "hasta", "frec_obs", "frec_esp", "chi", "chi_acum"):
-            self.tabla_chi.column(col, width=80)
-            
-        self.tabla_chi.pack(fill=tk.BOTH, expand=True)
-        
-        # Prueba KS
-        frame_ks = ttk.LabelFrame(frame_pruebas, text="Prueba K-S", padding="5")
-        frame_ks.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5)
-        
-        self.tabla_ks = ttk.Treeview(frame_ks, columns=("desde", "hasta", "frec_obs", "frec_esp", "po", "pe", "calc", "max"), 
-                                    show="headings", height=8)
-        self.tabla_ks.heading("desde", text="Desde")
-        self.tabla_ks.heading("hasta", text="Hasta")
-        self.tabla_ks.heading("frec_obs", text="Frec. Obs.")
-        self.tabla_ks.heading("frec_esp", text="Frec. Esp.")
-        self.tabla_ks.heading("po", text="Po(ac)")
-        self.tabla_ks.heading("pe", text="Pe(ac)")
-        self.tabla_ks.heading("calc", text="|Po-Pe|")
-        self.tabla_ks.heading("max", text="Max")
-        
-        for col in ("desde", "hasta", "frec_obs", "frec_esp", "po", "pe", "calc", "max"):
-            self.tabla_ks.column(col, width=80)
-            
-        self.tabla_ks.pack(fill=tk.BOTH, expand=True)
-        
-        # Resultados de las pruebas
-        self.texto_resultados = scrolledtext.ScrolledText(main_frame, width=100, height=5)
-        self.texto_resultados.grid(row=3, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
-        
-        # Configurar pesos de filas y columnas
-        main_frame.columnconfigure(0, weight=1)
-        main_frame.columnconfigure(1, weight=1)
-        main_frame.rowconfigure(1, weight=1)
-        
+        ttk.Button(btn_vis_frame, text="Ver Histograma", 
+                  command=self._mostrar_histograma).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_vis_frame, text="Ver Resultados", 
+                  command=self._mostrar_resultados).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_vis_frame, text="Prueba Chi-Cuadrado", 
+                  command=self._mostrar_ventana_chi).pack(side=tk.LEFT, padx=5)
+        ttk.Button(btn_vis_frame, text="Prueba K-S", 
+                  command=self._mostrar_ventana_ks).pack(side=tk.LEFT, padx=5)
+    
     def _mostrar_parametros_distribucion(self, event=None):
         # Limpiar frame de parámetros
         for widget in self.frame_parametros.winfo_children():
@@ -316,61 +225,246 @@ class AplicacionGeneradora:
             # Generar los datos
             self.datos_generados = generador.generar_muestra(n)
             
-            # Mostrar resultados
-            self._mostrar_resultados(distribucion, intervalos)
+            # Actualizar tabla de datos
+            self.tabla_datos.delete(*self.tabla_datos.get_children())
+            for dato in self.datos_generados:
+                self.tabla_datos.insert("", tk.END, values=(dato,))
+            
+            # Realizar pruebas de bondad de ajuste
+            self.prueba_chi = ChiCuadrado(self.datos_generados, distribucion, intervalos)
+            self.prueba_ks = KS(self.datos_generados, distribucion)
+            
+            messagebox.showinfo("Éxito", "Datos generados correctamente", parent=self.ventana)
                 
         except ValueError as e:
-            messagebox.showerror("Error", f"Parámetros requeridos: {str(e)}")
+            messagebox.showerror("Error", f"Parámetros requeridos: {str(e)}", parent=self.ventana)
         except Exception as e:
-            messagebox.showerror("Error", f"Ocurrió un error: {str(e)}")
+            messagebox.showerror("Error", f"Ocurrió un error: {str(e)}", parent=self.ventana)
     
-    def _mostrar_resultados(self, distribucion, intervalos):
-        # Mostrar datos en la tabla
-        self.tabla_datos.delete(*self.tabla_datos.get_children())
-        for dato in self.datos_generados:
-            self.tabla_datos.insert("", tk.END, values=(dato,))
+    def _mostrar_histograma(self):
+        if not self.datos_generados:
+            messagebox.showwarning("Advertencia", "Primero debe generar datos", parent=self.ventana)
+            return
+            
+        # Crear ventana para histograma
+        hist_window = tk.Toplevel(self.ventana)
+        hist_window.title("Histograma")
+        hist_window.geometry("800x500")
+        hist_window.configure(bg=self.colores['fondo'])
         
-        # Generar histograma
-        self.ax.clear()
-        n, bins, patches = self.ax.hist(self.datos_generados, bins=intervalos, edgecolor='black')
-        self.ax.set_title(f'Histograma - Distribución {distribucion}')
-        self.ax.set_xlabel('Valores')
-        self.ax.set_ylabel('Frecuencia')
-        self.canvas.draw()
+        # Configurar figura
+        fig, ax = plt.subplots(figsize=(8, 5))
+        intervalos = int(self.intervalos_seleccionados.get())
+        n, bins, patches = ax.hist(self.datos_generados, bins=intervalos, 
+                                  edgecolor='white', color=self.colores['boton'])
         
-        # Realizar pruebas de bondad de ajuste
-        prueba_chi = ChiCuadrado(self.datos_generados, distribucion, intervalos)
-        prueba_ks = KS(self.datos_generados, distribucion)
+        # Personalizar estilo del histograma
+        ax.set_title(f'Histograma - Distribución {self.distribucion_seleccionada.get()}', 
+                    pad=20, color=self.colores['texto'])
+        ax.set_xlabel('Valores', color=self.colores['texto'])
+        ax.set_ylabel('Frecuencia', color=self.colores['texto'])
+        ax.grid(True, linestyle='--', alpha=0.7)
         
-        # Mostrar resultados de las pruebas
-        self._mostrar_resultados_pruebas(prueba_chi, prueba_ks, distribucion)
+        # Configurar colores del gráfico
+        fig.patch.set_facecolor(self.colores['fondo'])
+        ax.set_facecolor(self.colores['panel'])
+        ax.spines['bottom'].set_color(self.colores['texto'])
+        ax.spines['left'].set_color(self.colores['texto'])
+        ax.tick_params(axis='x', colors=self.colores['texto'])
+        ax.tick_params(axis='y', colors=self.colores['texto'])
+        
+        # Mostrar en la ventana
+        canvas = FigureCanvasTkAgg(fig, master=hist_window)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+        
+        # Botón para cerrar
+        ttk.Button(hist_window, text="Cerrar", command=hist_window.destroy).pack(pady=10)
     
-    def _mostrar_resultados_pruebas(self, prueba_chi, prueba_ks, distribucion):
-        # Limpiar tablas
-        self.tabla_chi.delete(*self.tabla_chi.get_children())
-        self.tabla_ks.delete(*self.tabla_ks.get_children())
+    def _mostrar_resultados(self):
+        if not self.prueba_chi or not self.prueba_ks:
+            messagebox.showwarning("Advertencia", "Primero debe generar datos", parent=self.ventana)
+            return
+            
+        # Crear ventana para resultados
+        res_window = tk.Toplevel(self.ventana)
+        res_window.title("Resultados Estadísticos")
+        res_window.geometry("700x400")
+        res_window.configure(bg=self.colores['fondo'])
         
-        # Mostrar resultados Chi-cuadrado
-        for fila in prueba_chi.resultados:
-            self.tabla_chi.insert("", tk.END, values=fila)
+        # Frame principal
+        main_frame = ttk.Frame(res_window)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
-        # Mostrar resultados KS
-        for fila in prueba_ks.resultados:
-            self.tabla_ks.insert("", tk.END, values=fila)
+        # Área de texto con scroll
+        texto_resultados = scrolledtext.ScrolledText(
+            main_frame, 
+            wrap=tk.WORD,
+            font=('Consolas', 10),
+            background=self.colores['panel'],
+            foreground=self.colores['texto'],
+            padx=10,
+            pady=10
+        )
+        texto_resultados.pack(fill=tk.BOTH, expand=True)
         
-        # Mostrar conclusiones
-        self.texto_resultados.delete(1.0, tk.END)
-        self.texto_resultados.insert(tk.END, 
-            f"Resultados para distribución {distribucion} (nivel de significancia 0.05):\n\n")
+        # Obtener distribución seleccionada
+        distribucion = self.distribucion_seleccionada.get()
+        
+        # Insertar resultados
+        texto_resultados.insert(tk.END, 
+            f"RESULTADOS PARA DISTRIBUCIÓN {distribucion.upper()}\n")
+        texto_resultados.insert(tk.END, "="*50 + "\n\n")
         
         # Resultado Chi-cuadrado
-        self.texto_resultados.insert(tk.END, "Prueba Chi-cuadrado:\n")
-        self.texto_resultados.insert(tk.END, f"Valor calculado: {prueba_chi.estadistico:.4f}\n")
-        self.texto_resultados.insert(tk.END, f"Valor crítico: {prueba_chi.valor_critico:.4f}\n")
-        self.texto_resultados.insert(tk.END, prueba_chi.conclusion + "\n")
+        texto_resultados.insert(tk.END, "PRUEBA CHI-CUADRADO\n")
+        texto_resultados.insert(tk.END, "-"*30 + "\n")
+        texto_resultados.insert(tk.END, f"Valor calculado: {self.prueba_chi.estadistico:.4f}\n")
+        texto_resultados.insert(tk.END, f"Valor crítico: {self.prueba_chi.valor_critico:.4f}\n")
+        texto_resultados.insert(tk.END, f"Conclusión: {self.prueba_chi.conclusion}\n\n")
         
         # Resultado KS
-        self.texto_resultados.insert(tk.END, "\nPrueba Kolmogorov-Smirnov:\n")
-        self.texto_resultados.insert(tk.END, f"Valor calculado: {prueba_ks.estadistico:.4f}\n")
-        self.texto_resultados.insert(tk.END, f"Valor crítico: {prueba_ks.valor_critico:.4f}\n")
-        self.texto_resultados.insert(tk.END, prueba_ks.conclusion + "\n")
+        texto_resultados.insert(tk.END, "PRUEBA KOLMOGOROV-SMIRNOV\n")
+        texto_resultados.insert(tk.END, "-"*30 + "\n")
+        texto_resultados.insert(tk.END, f"Valor calculado: {self.prueba_ks.estadistico:.4f}\n")
+        texto_resultados.insert(tk.END, f"Valor crítico: {self.prueba_ks.valor_critico:.4f}\n")
+        texto_resultados.insert(tk.END, f"Conclusión: {self.prueba_ks.conclusion}\n")
+        
+        # Hacer el texto de solo lectura
+        texto_resultados.config(state=tk.DISABLED)
+        
+        # Botón para cerrar
+        ttk.Button(main_frame, text="Cerrar", command=res_window.destroy).pack(pady=10)
+    
+    def _mostrar_ventana_chi(self):
+        if not self.prueba_chi:
+            messagebox.showwarning("Advertencia", "Primero debe generar una distribución", parent=self.ventana)
+            return
+            
+        ventana_chi = tk.Toplevel(self.ventana)
+        ventana_chi.title("Prueba Chi-Cuadrado - Detalles")
+        ventana_chi.geometry("800x600")
+        ventana_chi.configure(bg=self.colores['fondo'])
+        
+        # Frame principal
+        frame_principal = ttk.Frame(ventana_chi, padding="10")
+        frame_principal.pack(fill=tk.BOTH, expand=True)
+        
+        # Tabla de resultados
+        tabla_chi = ttk.Treeview(frame_principal, 
+                               columns=("desde", "hasta", "frec_obs", "frec_esp", "chi", "chi_acum"), 
+                               show="headings", height=20)
+        
+        # Configurar columnas
+        columnas = [
+            ("desde", "Desde", 100),
+            ("hasta", "Hasta", 100),
+            ("frec_obs", "Frec. Obs", 90),
+            ("frec_esp", "Frec. Esp", 90),
+            ("chi", "Chi²", 90),
+            ("chi_acum", "Chi² Acum", 90)
+        ]
+        
+        for col_id, col_text, col_width in columnas:
+            tabla_chi.heading(col_id, text=col_text)
+            tabla_chi.column(col_id, width=col_width, anchor=tk.CENTER)
+        
+        # Agregar scrollbar
+        scrollbar = ttk.Scrollbar(frame_principal, orient="vertical", command=tabla_chi.yview)
+        tabla_chi.configure(yscrollcommand=scrollbar.set)
+        
+        # Posicionar widgets
+        tabla_chi.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Llenar tabla con datos
+        for fila in self.prueba_chi.resultados:
+            tabla_chi.insert("", tk.END, values=fila)
+        
+        # Mostrar conclusiones
+        frame_conclusion = ttk.LabelFrame(frame_principal, text="Conclusiones", padding="10")
+        frame_conclusion.pack(fill=tk.X, pady=10)
+        
+        texto_conclusion = tk.Text(frame_conclusion, height=4, wrap=tk.WORD, 
+                                 font=("Consolas", 10), 
+                                 bg=self.colores['panel'],
+                                 fg=self.colores['texto'])
+        texto_conclusion.pack(fill=tk.BOTH, expand=True)
+        
+        texto_conclusion.insert(tk.END, f"Valor calculado: {self.prueba_chi.estadistico:.4f}\n")
+        texto_conclusion.insert(tk.END, f"Valor crítico: {self.prueba_chi.valor_critico:.4f}\n")
+        texto_conclusion.insert(tk.END, self.prueba_chi.conclusion)
+        texto_conclusion.config(state=tk.DISABLED)
+        
+        # Botón para cerrar
+        ttk.Button(frame_principal, text="Cerrar", command=ventana_chi.destroy).pack(pady=10)
+
+    def _mostrar_ventana_ks(self):
+        if not self.prueba_ks:
+            messagebox.showwarning("Advertencia", "Primero debe generar una distribución", parent=self.ventana)
+            return
+            
+        ventana_ks = tk.Toplevel(self.ventana)
+        ventana_ks.title("Prueba Kolmogorov-Smirnov - Detalles")
+        ventana_ks.geometry("900x600")
+        ventana_ks.configure(bg=self.colores['fondo'])
+        
+        # Frame principal
+        frame_principal = ttk.Frame(ventana_ks, padding="10")
+        frame_principal.pack(fill=tk.BOTH, expand=True)
+        
+        # Tabla de resultados
+        tabla_ks = ttk.Treeview(frame_principal, 
+                              columns=("desde", "hasta", "frec_obs", "frec_esp", "po", "pe", "calc", "max"), 
+                              show="headings", height=20)
+        
+        # Configurar columnas
+        columnas = [
+            ("desde", "Desde", 100),
+            ("hasta", "Hasta", 100),
+            ("frec_obs", "Frec. Obs", 90),
+            ("frec_esp", "Frec. Esp", 90),
+            ("po", "Prob. Obs", 90),
+            ("pe", "Prob. Esp", 90),
+            ("calc", "Diferencia", 90),
+            ("max", "Máximo", 90)
+        ]
+        
+        for col_id, col_text, col_width in columnas:
+            tabla_ks.heading(col_id, text=col_text)
+            tabla_ks.column(col_id, width=col_width, anchor=tk.CENTER)
+        
+        # Agregar scrollbar
+        scrollbar = ttk.Scrollbar(frame_principal, orient="vertical", command=tabla_ks.yview)
+        tabla_ks.configure(yscrollcommand=scrollbar.set)
+        
+        # Posicionar widgets
+        tabla_ks.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Llenar tabla con datos
+        for fila in self.prueba_ks.resultados:
+            tabla_ks.insert("", tk.END, values=fila)
+        
+        # Mostrar conclusiones
+        frame_conclusion = ttk.LabelFrame(frame_principal, text="Conclusiones", padding="10")
+        frame_conclusion.pack(fill=tk.X, pady=10)
+        
+        texto_conclusion = tk.Text(frame_conclusion, height=4, wrap=tk.WORD, 
+                                 font=("Consolas", 10), 
+                                 bg=self.colores['panel'],
+                                 fg=self.colores['texto'])
+        texto_conclusion.pack(fill=tk.BOTH, expand=True)
+        
+        texto_conclusion.insert(tk.END, f"Valor calculado: {self.prueba_ks.estadistico:.4f}\n")
+        texto_conclusion.insert(tk.END, f"Valor crítico: {self.prueba_ks.valor_critico:.4f}\n")
+        texto_conclusion.insert(tk.END, self.prueba_ks.conclusion)
+        texto_conclusion.config(state=tk.DISABLED)
+        
+        # Botón para cerrar
+        ttk.Button(frame_principal, text="Cerrar", command=ventana_ks.destroy).pack(pady=10)
+
+# Para ejecutar la aplicación
+if __name__ == "__main__":
+    app = AplicacionGeneradora()
+    app.ejecutar()
