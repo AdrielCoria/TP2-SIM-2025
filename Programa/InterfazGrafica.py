@@ -232,8 +232,8 @@ class AplicacionGeneradora:
             
             # Realizar pruebas de bondad de ajuste
             self.prueba_chi = ChiCuadrado(self.datos_generados, distribucion, intervalos)
-            self.prueba_ks = KS(self.datos_generados, distribucion)
-            
+            self.prueba_ks = KS(self.datos_generados, distribucion, intervalos) 
+                
             messagebox.showinfo("Éxito", "Datos generados correctamente", parent=self.ventana)
                 
         except ValueError as e:
@@ -406,7 +406,7 @@ class AplicacionGeneradora:
             
         ventana_ks = tk.Toplevel(self.ventana)
         ventana_ks.title("Prueba Kolmogorov-Smirnov - Detalles")
-        ventana_ks.geometry("900x600")
+        ventana_ks.geometry("1000x600")
         ventana_ks.configure(bg=self.colores['fondo'])
         
         # Frame principal
@@ -415,19 +415,20 @@ class AplicacionGeneradora:
         
         # Tabla de resultados
         tabla_ks = ttk.Treeview(frame_principal, 
-                              columns=("desde", "hasta", "frec_obs", "frec_esp", "po", "pe", "calc", "max"), 
-                              show="headings", height=20)
+                            columns=("lim_inf", "lim_sup", "frec_obs", "prob_obs", "prob_esp", "po_acum", "pe_acum", "dif", "max_dif"), 
+                            show="headings", height=20)
         
         # Configurar columnas
         columnas = [
-            ("desde", "Desde", 100),
-            ("hasta", "Hasta", 100),
-            ("frec_obs", "Frec. Obs", 90),
-            ("frec_esp", "Frec. Esp", 90),
-            ("po", "Prob. Obs", 90),
-            ("pe", "Prob. Esp", 90),
-            ("calc", "Diferencia", 90),
-            ("max", "Máximo", 90)
+            ("lim_inf", "Lím. Inf.", 80),
+            ("lim_sup", "Lím. Sup.", 80),
+            ("frec_obs", "Frec. Obs", 80),
+            ("prob_obs", "Prob. Obs", 80),
+            ("prob_esp", "Prob. Esp", 80),
+            ("po_acum", "PO Acum.", 80),
+            ("pe_acum", "PE Acum.", 80),
+            ("dif", "Diferencia", 80),
+            ("max_dif", "Máx. Dif.", 80)
         ]
         
         for col_id, col_text, col_width in columnas:
@@ -451,9 +452,9 @@ class AplicacionGeneradora:
         frame_conclusion.pack(fill=tk.X, pady=10)
         
         texto_conclusion = tk.Text(frame_conclusion, height=4, wrap=tk.WORD, 
-                                 font=("Consolas", 10), 
-                                 bg=self.colores['panel'],
-                                 fg=self.colores['texto'])
+                                font=("Consolas", 10), 
+                                bg=self.colores['panel'],
+                                fg=self.colores['texto'])
         texto_conclusion.pack(fill=tk.BOTH, expand=True)
         
         texto_conclusion.insert(tk.END, f"Valor calculado: {self.prueba_ks.estadistico:.4f}\n")
@@ -463,8 +464,3 @@ class AplicacionGeneradora:
         
         # Botón para cerrar
         ttk.Button(frame_principal, text="Cerrar", command=ventana_ks.destroy).pack(pady=10)
-
-# Para ejecutar la aplicación
-if __name__ == "__main__":
-    app = AplicacionGeneradora()
-    app.ejecutar()
