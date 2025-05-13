@@ -36,6 +36,8 @@ class ChiCuadrado:
             if frec_esp[i] < 5 and len(frec_esp) > 1:
                 # Agrupar con el siguiente intervalo (o anterior si es el último)
                 j = i+1 if i < len(frec_esp)-1 else i-1
+                if j < i:
+                    i, j = j, i
                 
                 frec_obs[i] += frec_obs.pop(j)
                 frec_esp[i] += frec_esp.pop(j)
